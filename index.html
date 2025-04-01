@@ -1,38 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BabyCry Detection</title>
+    <title>Baby Cry Detection</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/audio"></script>
 </head>
 <body>
     <h1>Baby Cry Detection</h1>
-    <video id="webcam" autoplay playsinline></video>
-    <p id="result">Loading...</p>
+    <p id="result">Loading model...</p>
 
     <script>
-        const URL = "https://yourusername.github.io/BabyCareAI/"; // Replace with your GitHub Pages URL
-        let model, webcam, maxPredictions;
+        const URL = "https://sigmanaret.github.io/BabyCareAI/";
+        let model, mic, maxPredictions;
 
         async function init() {
-            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            model = await tmAudio.load(URL + "model.json", URL + "metadata.json");
             maxPredictions = model.getTotalClasses();
-            
-            webcam = document.getElementById("webcam");
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => { webcam.srcObject = stream; })
-                .catch(err => console.log(err));
 
-            predict();
+            mic = new tmAudio.AudioUtils();
+            await mic.setup(); // Request microphone access
+            mic.listen(predictionCallback);
         }
 
-        async function predict() {
-            while (true) {
-                const prediction = await model.predict(webcam);
-                let highest = prediction.reduce((p, c) => (p.probability > c.probability ? p : c));
-                document.getElementById("result").innerText = "Detected: " + highest.className;
-                await new Promise(r => setTimeout(r, 1000));
-            }
+        function predictionCallback(predictions) {
+            let highest = predictions.reduce((p, c) => (p.probability > c.probability ? p : c));
+            document.getElementById("result").innerText = "Detected: " + highest.className;
         }
 
         window.onload = init;
