@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BabyCry Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+</head>
+<body>
+    <h1>Baby Cry Detection</h1>
+    <video id="webcam" autoplay playsinline></video>
+    <p id="result">Loading...</p>
+
+    <script>
+        const URL = "https://yourusername.github.io/BabyCareAI/"; // Replace with your GitHub Pages URL
+        let model, webcam, maxPredictions;
+
+        async function init() {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            maxPredictions = model.getTotalClasses();
+            
+            webcam = document.getElementById("webcam");
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => { webcam.srcObject = stream; })
+                .catch(err => console.log(err));
+
+            predict();
+        }
+
+        async function predict() {
+            while (true) {
+                const prediction = await model.predict(webcam);
+                let highest = prediction.reduce((p, c) => (p.probability > c.probability ? p : c));
+                document.getElementById("result").innerText = "Detected: " + highest.className;
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
