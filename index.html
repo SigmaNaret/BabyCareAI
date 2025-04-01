@@ -3,31 +3,36 @@
 <head>
     <title>Baby Cry Detection</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/audio"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/audio@latest"></script>
 </head>
 <body>
     <h1>Baby Cry Detection</h1>
     <p id="result">Loading model...</p>
+    <button onclick="startListening()">Start Listening</button>
 
     <script>
+        let model, recognizer;
         const URL = "https://sigmanaret.github.io/BabyCareAI/"; // Your GitHub Pages URL
-        let model, mic, maxPredictions;
 
-        async function init() {
+        async function loadModel() {
+            console.log("Loading model...");
             model = await tmAudio.load(URL + "model.json", URL + "metadata.json");
-            maxPredictions = model.getTotalClasses();
-
-            mic = new tmAudio.AudioUtils();
-            await mic.setup(); // Request microphone access
-            mic.listen(predictionCallback);
+            recognizer = new tmAudio.Recognizer(model);
+            console.log("Model loaded!");
         }
 
-        function predictionCallback(predictions) {
-            let highest = predictions.reduce((p, c) => (p.probability > c.probability ? p : c));
-            document.getElementById("result").innerText = "Detected: " + highest.className;
+        async function startListening() {
+            if (!model) {
+                await loadModel();
+            }
+
+            await recognizer.listen(result => {
+                let highest = result.reduce((p, c) => (p.probability > c.probability ? p : c));
+                document.getElementById("result").innerText = "Detected: " + highest.className;
+            });
         }
 
-        window.onload = init;
+        window.onload = loadModel;
     </script>
 </body>
 </html>
